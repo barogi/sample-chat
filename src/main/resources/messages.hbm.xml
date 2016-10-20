@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+     "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+       "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<hibernate-mapping>    
+    <class name="chat.model.Message" table="messages" entity-name="message">
+        <id name="id" type="integer">
+            <generator class="native"/>
+        </id>
+        <property name="user" type="string">
+            <column name="author" length="15" sql-type="string"/>
+        </property>
+        <property name="text" type="string">
+            <column name="text" length="140" sql-type="string"/>
+        </property>
+        <property name="time" type="timestamp" insert="false"  >
+            <column name="tstamp" sql-type="timestamp"/>
+        </property>
+    </class>
+    <query name="messagesByDate">
+    <![CDATA[
+        select m from message m 
+        where 
+            m.time between :dateFrom and :dateTo 
+        order 
+            by m.id asc
+    ]]>
+    </query>
+    <sql-query name="messagesRecentById">
+        <return alias="m" class="message"/><![CDATA[
+        SELECT m.id AS {m.id},
+            m.text AS {m.text},
+            m.author AS {m.user},
+            m.tstamp AS {m.time}
+        FROM messages m 
+        WHERE 
+            m.id > :messageId
+        AND 
+            m.tstamp > current_timestamp - interval '2' hour
+        ORDER BY m.id ASC]]>
+    </sql-query>    
+</hibernate-mapping>

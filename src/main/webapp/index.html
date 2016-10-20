@@ -1,0 +1,133 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <title>Chat</title>
+        <style type="text/css">
+            * {
+                font-family: courier new; 
+                font-size: 14px; 
+                color:black; 
+                background:white; 
+                text-align:left;
+                border:none
+            }
+            body { 
+                padding-left:20px;
+            }
+            #log { 
+                height: 400px;
+                width: 100%;
+                overflow-y: scroll;
+                overflow-x: hidden;
+            }
+            #tb {                
+                padding-top: 10px;
+            }
+            input {
+                border-bottom:1px solid #aaaaaa;
+            }
+        </style>
+        <script src="//code.jquery.com/jquery-1.12.4.js"></script>
+        <script type="text/javascript">
+            $(document).ready(function() {
+                $.ajaxSetup({
+                    url : 'api/messages',
+                    dataType : 'json',
+                    contentType : 'application/json',
+                });
+                $( document ).ajaxError( function() {
+                    setStatus('Error...');
+                });
+                var setStatus = function( text ) {
+                    $( "#status" ).text( text );
+                };
+                var onMessagePost = function() {
+                    var user = $("#user").val(),
+                        text = $("#msg").val();
+                    if (text) {
+                        setStatus('Sending...');
+                        $.ajax({
+                            method : 'POST',
+                            data : JSON.stringify({
+                                user : user || 'anonimous',
+                                text : text
+                            })
+                        }).done(function(){
+                            setStatus('Send ok');
+                            $("#msg").val('');
+                        });
+                    }
+                };
+                
+                $( "#send" ).click( onMessagePost );
+                $( "#msg" ).keyup( function( evt ) {
+                    if (evt.keyCode && evt.keyCode == 13) {
+                        onMessagePost();
+                    }
+                });                
+                
+                var renderMessage = function(el, msg) {
+                    var text = $("<div>")
+                            .text(msg.user + " : " +  msg.text)
+                            .html();
+                    el.append( text + "<br/>");
+                };
+                
+                var loadRecentMessages = function(callback) {
+                    var lastMessage;
+                    return function() {                        
+                        var el = $("#log");
+                        setStatus('Loading...');
+                        $.ajax({
+                            data : {
+                                lastMessageId : lastMessage 
+                                    ? lastMessage.id
+                                    : undefined                   
+                            }
+                        }).done(function( data, status, xhr ) {
+                            setStatus('Load messages ' + data.length);                            
+                            $.each( data, function(index, msg) {
+                                renderMessage( el, msg );
+                                lastMessage = msg;
+                            });
+                            if(el.length && data.length ) {
+                                el.scrollTop(el[0].scrollHeight - el.height());                            
+                            }                            
+                        }).always(function() {
+                            if (callback) {
+                                callback.call(this);
+                            }
+                        });
+                    }
+                }();
+                
+                //polling loop
+                (function( delay ) {
+                    var lastTime = Date.now();
+                    setInterval( function () {
+                        if ( Date.now() - lastTime > delay ) {
+                            loadRecentMessages( function() {
+                                lastTime = Date.now();
+                            });
+                        }
+                    }, delay/2 );
+                })( 1000 );
+            });
+        </script>
+    </head>
+<body>    
+    <a href="history.html" target="_blank">History</a>
+    <br><br>
+    <div class="plain" id="content">
+        <div id="log"></div>
+        <br>
+        <span id="tb">
+            <input id="user" type="text" size="16" maxlength="16" placeholder="username">&nbsp;
+            <input id="msg" type="text" size="100" maxlength="140" placeholder="message">        
+            <input id="send" type="button" value="Submit">
+            <span id="status" style="color:red"></span>
+        </span>
+    </div>
+</body>
+</html>
+

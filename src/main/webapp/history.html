@@ -1,0 +1,107 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <title>History</title>
+        <style type="text/css">
+            * {
+                font-family: courier new; 
+                font-size: 14px; 
+                color:black; 
+                background:white; 
+                text-align:left;
+                border:none
+            }
+            body { 
+                padding-left:20px;
+            }
+            #log { 
+                height: 400px;
+                width: 100%;
+                overflow-y: scroll;
+                overflow-x: hidden;
+            }
+            #tb {                
+                padding-top: 10px;
+            }
+            input {
+                border-bottom:1px solid #aaaaaa;
+            }
+        </style>
+        <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+        <script src="//code.jquery.com/jquery-1.12.4.js"></script>
+        <script src="//code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+        <script type="text/javascript">
+            $(document).ready(function() {
+                var setStatus = function( text ) {
+                    $( "#status" ).text( text );
+                };
+                $( document ).ajaxError( function() {
+                    setStatus('Error');
+                });                
+                $( document ).tooltip();
+                $( "#from, #to" ).datepicker({
+                    dateFormat : 'dd/mm/yy'
+                }).datepicker('setDate', new Date());
+                
+                var validate = function() {
+                    var from = $("#from").datepicker("getDate"),
+                        to = $("#to").datepicker("getDate"),
+                        message = '';
+                    if (!from) {
+                        message = 'Date <from> not selected';
+                    }
+                    if (!to) {
+                        message = 'Date <to> not selected';
+                    }
+                    if (from && to && from.getTime() > to.getTime()) {
+                        message = 'Date from can not be after date to';
+                    }
+                    setStatus( message );
+                    return !message;
+                }
+                var renderMessage = function(el, msg) {
+                    var text = $("<div>")
+                            .text(msg.user + " : " +  msg.text)
+                            .html();
+                    el.append( text + "<br/>");
+                };
+                $( "#send" ).click( function() {
+                    var fromDate = $("#from").datepicker("getDate"),
+                        toDate = $("#to").datepicker("getDate")
+                    if (!validate()) {                        
+                        return;
+                    }
+                    toDate.setHours( 24 );
+                    var el = $("#log");
+                    el.empty();
+                    setStatus('Loading ...');                    
+                    $.ajax({
+                        url : 'api/messages/archive',
+                        contentType : 'application/json',
+                        data : {
+                            timeFrom : fromDate.getTime(),
+                            timeTo : toDate.getTime()
+                        }
+                    }).done(function( data, status, xhr ) {
+                        setStatus('Done ' + data.length );
+                        $.each( data, function(index, msg) {
+                            renderMessage(el, msg);
+                        });
+                    });
+                });
+            });
+        </script>
+    </head>
+<body>
+    <div id="content">
+        <span id="tb">
+            <input id="from" type="text" size="16" maxlength="16" placeholder="Date from" title="Select date from in format dd/mm/yyyy">&nbsp;
+            <input id="to" type="text" size="16" maxlength="16" placeholder="Date to" title="Select date from in format dd/mm/yyyy">        
+            <input id="send" type="button" value="Show">
+            <span id="status" style="color:red"></span>
+        </span>
+        <div id="log"></div>
+    </div>
+</body>
+</html>
+
