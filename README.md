@@ -31,7 +31,7 @@ Build without tests
 >     mvn  clean package -DskipTests=true
 
 Build and run intergration test for **hsql**
->     mvn clean package -Ddb.env=mysql -Dspring.profiles.active=dev
+>     mvn clean package -Ddb.env=hsql -Dspring.profiles.active=dev
 
 Build and run intergration test for **mysql**
 >     mvn clean package -Ddb.env=mysql -Dspring.profiles.active=dev
