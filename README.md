@@ -1,5 +1,7 @@
 #### Configure
 
+[![Build Status](https://travis-ci.org/barogi/sample-chat.svg?branch=master)](https://travis-ci.org/barogi/sample-chat)
+
 ##### web.xml
 Default database type is **hsql**
 ```xml
